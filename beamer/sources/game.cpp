@@ -1,7 +1,7 @@
 #include "raylib.h"
-
-
-
+#include "swept-aabb.h"
+#include "operators.h"
+#include <stdio.h>
 
 class Game {
 public:
@@ -50,17 +50,27 @@ private:
     {
         BeginDrawing();
         ClearBackground(BLUE);
+
         Vector2 vMouse = {float(GetMouseX()), float(GetMouseY())};
-
         Rectangle r = {100.0f,100.0f, 100.0f, 200.0f};
-        Rectangle s = {vMouse.x, vMouse.y, 40.0f, 80.0f};
-        
-        DrawRectangleLinesEx(s, 5.0f, GREEN);
+        Vector2 ray_point = {20.0f, 20.0f};
 
-        if (CheckCollisionRecs(r,s))
-            DrawRectangleLinesEx(r, 5.0f, YELLOW);
+        Vector2 ray_direction = vMouse - ray_point;
+        DrawLineV(ray_point, vMouse, GREEN);
+
+        Vector2 cp, cn;
+        float t;
+
+        if (helper::RayVsRect(ray_point, ray_direction, r, cp, cn, t) && t < 1)
+        {
+            DrawRectangleRec(r, YELLOW);
+            DrawCircleV(cp, 10.0, RED);
+            DrawLineV(cp, cp+(cn*Vector2{50, 50}), YELLOW);
+
+        }
         else
-            DrawRectangleLinesEx(r, 5.0f, WHITE);
+            DrawRectangleRec(r, WHITE);  
+        printf("t hit near is %f\n", t);
 
         EndDrawing();
     }
