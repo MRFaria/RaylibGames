@@ -2,7 +2,7 @@
 #define PLAYER_H
 
 #include "globals.h"
-#include "operators.h"
+#include "helpers.h"
 #include "swept-aabb.h"  // Include the header where `helper::DynamicRectVsRect` is declared
 #include "raylib.h"
 #include "level.h"

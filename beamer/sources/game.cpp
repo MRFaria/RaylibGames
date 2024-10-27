@@ -1,6 +1,6 @@
 #include "raylib.h"
 #include "swept-aabb.h"
-#include "operators.h"
+#include "helpers.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -115,7 +115,6 @@ class Game {
             {
                 if (level.flood_fill[y*level.GetWidth()+x] == TILE_FLOOD)
                 {
-                    
                     player.rect.x = (float)x*N_TILE_WIDTH + player.rect.width*1.2F;
                     player.rect.y = (float)y*N_TILE_HEIGHT + player.rect.height*1.2F;
                     goto EndOfLoop;
