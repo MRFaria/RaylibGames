@@ -85,13 +85,13 @@ class Level
                         DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, BROWN);
                         Level::Edges edges = CheckAdjacentEqual(x,y);
                         if (!edges.top)
-                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, 3, GREEN);
+                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         if (!edges.bottom)
-                            DrawLineEx({tileX, tileY+N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, 3, GREEN);
+                            DrawLineEx({tileX, tileY+N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         if (!edges.left)
-                            DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, 3, GREEN);
+                            DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         if (!edges.right)
-                            DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, 3, GREEN);
+                            DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                     }
                     if (sTileId == TILE_FLOOD)
                     {
