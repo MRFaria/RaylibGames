@@ -1,6 +1,7 @@
 
 #include "swept-aabb.h"
 #include "operators.h"
+#include "stdio.h"
 
 // Vector2 helper::operator+(const Vector2& v1, const Vector2& v2)
 // {
@@ -70,5 +71,36 @@ bool helper::RayVsRect(const Vector2& ray_origin, const Vector2& ray_dir, const 
     // considered a hit, the resolver wont change anything.
     return true;
 }
+
+
+bool helper::DynamicRectVsRect(const helper::DynamicRect& r_dynamic, const float fTimeStep, const Rectangle& r_static, Vector2& contact_point, Vector2& contact_normal, float& contact_time)
+{
+    // Check if dynamic rectangle is actually moving - we assume rectangles are NOT in collision to start
+    if (r_dynamic.vel.x == 0 && r_dynamic.vel.y == 0) {
+        printf("speed is zero\n");
+        return false;
+    }
+
+    // Expand target rectangle by source dimensions
+    helper::DynamicRect expanded_target;
+    //printf("r_static size is %f, %f\n", r_static.width, r_static.height);
+    //printf("r_dynamic size is %f, %f\n", r_dynamic.rect.width, r_dynamic.rect.height);
+    //printf("rect before %f ", expanded_target.rect.width);
+    //("pos x before %f\n", r_dynamic.rect.x);
+    expanded_target.rect.x = (GetPos(r_static) - GetSize(r_dynamic.rect)/2).x;
+    expanded_target.rect.y = (GetPos(r_static) - GetSize(r_dynamic.rect)/2).y;
+    expanded_target.rect.width = (GetSize(r_static) + GetSize(r_dynamic.rect)).x;
+    expanded_target.rect.height = (GetSize(r_static) + GetSize(r_dynamic.rect)).y;
+    //printf("pos x after %f\n", expanded_target.rect.x);
+
+
+    if (helper::RayVsRect(GetPos(r_dynamic.rect) + GetSize(r_dynamic.rect) / 2, r_dynamic.vel * fTimeStep, expanded_target.rect, contact_point, contact_normal, contact_time ))
+        return(contact_time >= 0.0f && contact_time < 1.0f);
+
+
+    return false;
+}
+
+
 
 

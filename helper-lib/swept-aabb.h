@@ -2,14 +2,16 @@
 #define SWEPT_AABB_H
 
 #include "raylib.h"
-#include "raymath.h"
+#include <array>
 
 namespace helper
 {
-    //Vector2 operator+(const Vector2& v1, const Vector2& v2);
-    //Vector2 operator-(const Vector2& v1, const Vector2& v2);
-    //Vector2 operator*(const Vector2& v1, const Vector2& v2);
-    //Vector2 operator/(const Vector2& v1, const Vector2& v2);
+    struct DynamicRect {
+            Rectangle rect;
+            Vector2 vel;
+            std::array<Rectangle, 4> contact;
+    };
     bool RayVsRect(const Vector2& ray_origin, const Vector2& ray_dir, const Rectangle& rec, Vector2& contact_point, Vector2& contact_normal, float& t_hit_near);
+    bool DynamicRectVsRect(const helper::DynamicRect& r_dynamic, const float fTimeStep, const Rectangle& r_static, Vector2& contact_point, Vector2& contact_normal, float& contact_time);
 }
 #endif // SWEPT_AABB_H
