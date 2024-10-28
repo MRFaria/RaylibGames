@@ -69,8 +69,8 @@ class GameCamera {
 
 class Game {
     public:
-    Game(int screenWidth, int screenHeight, const char* title, Level level)
-    : title(title), isRunning(false), level(level)
+    Game(int screenWidth, int screenHeight, Level& level)
+    : isRunning(false), level(level)
     {
         Init();
     }
@@ -78,7 +78,7 @@ class Game {
 
     ~Game() 
     {
-        CloseWindow();
+
     }
 
 
@@ -104,9 +104,6 @@ class Game {
 
     void Init() 
     {
-        SetConfigFlags(FLAG_WINDOW_RESIZABLE);    // Window configuration flags
-        InitWindow(INITIAL_SCREEN_WIDTH, INITIAL_SCREEN_HEIGHT, title);
-        SetTargetFPS(60);
         isRunning = true;
 
         for (int y = 0; y<level.GetHeight(); y++)
@@ -164,10 +161,13 @@ class Game {
 
 int main() {
     SetRandomSeed(std::chrono::steady_clock::now().time_since_epoch().count());
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);    // Window configuration flags
+    InitWindow(INITIAL_SCREEN_WIDTH, INITIAL_SCREEN_HEIGHT, "Beamer");
+    SetTargetFPS(60);
     Level level({100,100});
-    Game myGame(800, 600, "My Raylib Game", level);
+    Game myGame(800, 600, level);
 
     myGame.Run();
-
+    CloseWindow();
     return 0;
 }

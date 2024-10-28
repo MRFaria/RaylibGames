@@ -1,6 +1,12 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
+
 #include "globals.h"
 #include "raylib.h"
 
@@ -19,12 +25,13 @@ class Level
     int _width;
     int _height;
     int _passNumber = 0;
+    Shader _shader;
     std::vector<char> _level; 
-
 
     public:
     Level(int width, int height) : _width(width), _height(height)
     {
+
         int attempts = 0;
         InitLevel();
         auto goodLevel = GenerateLevel();
@@ -44,6 +51,11 @@ class Level
             printf("Failed to generate a nice level\n");
             exit(1);
         }
+        _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/bloom.fs", GLSL_VERSION));
+    }
+    ~Level()
+    {
+        UnloadShader(_shader);           // Unload shader
     }
 
     int GetWidth()
@@ -82,8 +94,11 @@ class Level
                     auto sTileId = GetTile(x, y);
                     if (sTileId == TILE_WALL)
                     {
-                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, BROWN);
+                        Color color = (Color){ 0, 228, 48, 30 } ;
+                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, color);
                         Level::Edges edges = CheckAdjacentEqual(x,y);
+ 
+                        BeginShaderMode(_shader);
                         if (!edges.top)
                             DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         if (!edges.bottom)
@@ -92,6 +107,7 @@ class Level
                             DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         if (!edges.right)
                             DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
+                        EndShaderMode();
                     }
                     if (sTileId == TILE_FLOOD)
                     {

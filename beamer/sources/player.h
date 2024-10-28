@@ -10,8 +10,8 @@
 class Player {
 public:
     float speed = 600.0;
-    float acceleration = 3000.0;
-    float deceleration = 2000.0;
+    float acceleration = 2000.0;
+    float deceleration = 1500.0;
     Vector2 velocity = {0.0,0.0};
     Color color;      // Color of the player
     Rectangle rect;   // Rectangle for collision detection
