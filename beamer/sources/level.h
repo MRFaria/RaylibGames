@@ -9,6 +9,7 @@
 
 #include "globals.h"
 #include "raylib.h"
+#include "math.h"
 
 class Level
 {
@@ -21,12 +22,26 @@ class Level
         bool top;
     };
     std::vector<char> flood_fill;
+
     private:
     int _width;
     int _height;
     int _passNumber = 0;
-    Shader _shader;
     std::vector<char> _level; 
+    
+    //generic texture for rectangles
+    Texture2D _rectangle;
+    // shader stuff
+    Shader _shader;
+    int _shaderTimeLoc;
+    int _shaderResolutionLoc;
+    int _shaderBlurRadiusLoc;
+    int _textureLoc;
+    Vector4 _colDiffuse;
+    Vector2 _resolution;
+    float _time;
+    float _blurRadius;
+
 
     public:
     Level(int width, int height) : _width(width), _height(height)
@@ -51,12 +66,35 @@ class Level
             printf("Failed to generate a nice level\n");
             exit(1);
         }
-        _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/bloom.fs", GLSL_VERSION));
+
+
+        _rectangle = LoadTexture(ASSETS_PATH"/textures/rectangle.png");
+
+        _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/test.fs", GLSL_VERSION));
+        _time = 0.0;
+        _resolution  = {(float)GetScreenWidth(), (float)GetScreenHeight()};
+        _blurRadius = 10.0;
+
+        _shaderTimeLoc = GetShaderLocation(_shader, "u_time");
+        _shaderResolutionLoc = GetShaderLocation(_shader, "u_resolution");
+        _shaderBlurRadiusLoc = GetShaderLocation(_shader, "u_blurRadius");
+
+        SetShaderValue(_shader, _shaderTimeLoc, &_time, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(_shader, _shaderResolutionLoc, &_resolution, SHADER_UNIFORM_VEC2);
+        SetShaderValue(_shader, _shaderBlurRadiusLoc, &_blurRadius, SHADER_UNIFORM_FLOAT);
     }
+    
+    void Cleanup()
+    {
+        UnloadShader(_shader);
+        UnloadTexture(_rectangle);
+    }
+
     ~Level()
     {
-        UnloadShader(_shader);           // Unload shader
     }
+
+
 
     int GetWidth()
     {
@@ -78,15 +116,22 @@ class Level
 
     void Update()
     {
-        //
+        _time += GetFrameTime()/4.0;
+        SetShaderValue(_shader, _shaderTimeLoc, &_time, SHADER_UNIFORM_FLOAT);
     }
 
-    void Draw()
+
+
+    void Draw(Camera2D &camera)
     {
+        int startX = fmax(0, (int)(camera.target.x - GetScreenWidth() / 2) / N_TILE_WIDTH);
+        int endX = fmin(GetWidth(), (int)(camera.target.x + GetScreenWidth() / 2) / N_TILE_WIDTH + 1);
+        int startY = fmax(0, (int)(camera.target.y - GetScreenHeight() / 2) / N_TILE_HEIGHT);
+        int endY = fmin(GetHeight(), (int)(camera.target.y + GetScreenHeight() / 2) / N_TILE_HEIGHT + 1);
         // Loop through the tiles and only draw those within the camera view
-        for (int x = 0; x < _width; x++)
+        for (int x = startX; x < endX; x++)
         {
-            for (int y = 0; y < _height; y++)
+            for (int y = startY; y < endY; y++)
             {
                 float tileX = x * N_TILE_WIDTH;
                 float tileY = y * N_TILE_HEIGHT;
@@ -94,19 +139,32 @@ class Level
                     auto sTileId = GetTile(x, y);
                     if (sTileId == TILE_WALL)
                     {
+
                         Color color = (Color){ 0, 228, 48, 30 } ;
                         DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, color);
                         Level::Edges edges = CheckAdjacentEqual(x,y);
- 
                         BeginShaderMode(_shader);
-                        if (!edges.top)
-                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.bottom)
-                            DrawLineEx({tileX, tileY+N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.left)
-                            DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.right)
-                            DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
+                        if (!edges.top) {
+                            Rectangle sourceRect = { 0, 0, N_TILE_WIDTH, TILE_WALL_OUTLINE_WIDTH };
+                            DrawTextureRec(_rectangle, sourceRect, { tileX, tileY - TILE_WALL_OUTLINE_WIDTH }, GREEN);
+                        }
+
+                        if (!edges.bottom) {
+                            Rectangle sourceRect = { 0, 0, N_TILE_WIDTH, TILE_WALL_OUTLINE_WIDTH };
+                            // Adjust the position for the bottom edge to align precisely with the bottom boundary
+                            DrawTextureRec(_rectangle, sourceRect, { tileX, tileY + N_TILE_HEIGHT }, GREEN);
+                        }
+
+                        if (!edges.left) {
+                            Rectangle sourceRect = { 0, 0, TILE_WALL_OUTLINE_WIDTH, N_TILE_HEIGHT };
+                            DrawTextureRec(_rectangle, sourceRect, { tileX - TILE_WALL_OUTLINE_WIDTH, tileY }, GREEN);
+                        }
+
+                        if (!edges.right) {
+                            Rectangle sourceRect = { 0, 0, TILE_WALL_OUTLINE_WIDTH, N_TILE_HEIGHT };
+                            // Adjust the position for the right edge to align precisely with the right boundary
+                            DrawTextureRec(_rectangle, sourceRect, { tileX + N_TILE_HEIGHT, tileY }, GREEN);
+                        }  
                         EndShaderMode();
                     }
                     if (sTileId == TILE_FLOOD)
@@ -139,12 +197,12 @@ class Level
         {
             for(int x=0;x<_width;x++)  
             { 
-            if (x == 0 || x == _width -1 || y == 0 || y == _height-1)
-                _level[y*_width + x] = TILE_WALL;
-            else if(GetRandomValue(0, 100) < WALL_CHANCE)
-                _level[y*_width + x] = TILE_WALL;
-            else
-                _level[y*_width + x] = TILE_EMPTY;
+                if (x == 0 || x == _width -1 || y == 0 || y == _height-1)
+                    _level[y*_width + x] = TILE_WALL;
+                else if(GetRandomValue(0, 100) < WALL_CHANCE)
+                    _level[y*_width + x] = TILE_WALL;
+                else
+                    _level[y*_width + x] = TILE_EMPTY;
             }
         }
         for (int i=0; i<=NUM_PASSES; i++)
@@ -194,7 +252,7 @@ class Level
     void CellAutomataPass()
     {
         std::vector<char> _buffer;
-        _buffer.resize(_level.size());
+
         for (size_t i = 0; i < _level.size(); ++i) {
             _buffer.push_back(_level[i]);
         }

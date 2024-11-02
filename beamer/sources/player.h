@@ -87,10 +87,10 @@ public:
 
         // Use the player's original collision rect size
         Rectangle playerColRect = rect;
-        playerColRect.y -= TILE_WALL_OUTLINE_WIDTH/2.0;
-        playerColRect.x -= TILE_WALL_OUTLINE_WIDTH/2.0;
-        playerColRect.width += TILE_WALL_OUTLINE_WIDTH;
-        playerColRect.height += TILE_WALL_OUTLINE_WIDTH;
+        //playerColRect.y -= TILE_WALL_OUTLINE_WIDTH/2.0;
+        //playerColRect.x -= TILE_WALL_OUTLINE_WIDTH/2.0;
+        //playerColRect.width += TILE_WALL_OUTLINE_WIDTH;
+        //playerColRect.height += TILE_WALL_OUTLINE_WIDTH;
         // Handle X-axis movement
         Vector2 xVelocity = {velocity.x, 0}; // Only move along the X axis
         if (CheckCollisionsWithLevel(level, playerColRect, xVelocity, contactPoint, contactNormal, contactTime)) {
@@ -131,9 +131,13 @@ private:
         // Check all tiles in the level for collision
         helper::DynamicRect dynamicRect;
         dynamicRect.rect = rectP;
-        dynamicRect.vel = velocityP; 
-        for (int x = 0; x < level.GetWidth(); x++) {
-            for (int y = 0; y < level.GetHeight(); y++) {
+        dynamicRect.vel = velocityP;
+
+        int playerTilePositionX = rectP.x/N_TILE_WIDTH;
+        int playerTilePositionY = rectP.y/N_TILE_HEIGHT;
+
+        for (int x = playerTilePositionX - 10; x < playerTilePositionX + 10; x++) {
+            for (int y = playerTilePositionY - 10; y < playerTilePositionY + 10; y++) {     
                 if (level.GetTile(x, y) == TILE_WALL) {
                     Rectangle staticRect = { x * (float)N_TILE_WIDTH, y * (float)N_TILE_HEIGHT, (float)N_TILE_WIDTH, (float)N_TILE_HEIGHT };
                     if (helper::DynamicRectVsRect(dynamicRect, GetFrameTime(), staticRect, contactPoint, contactNormal, contactTime)) {
@@ -142,6 +146,8 @@ private:
                 }
             }
         }
+
+
 
         return false; // No collision detected
     }

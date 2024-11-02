@@ -40,7 +40,9 @@ class GameCamera {
             _camera.offset.y = (width / 2.0f) - (height - level.GetHeight() * N_TILE_HEIGHT) / 2.0f;
         }
 
-        _camera.target = player.GetPosition();
+        float smoothingFactor = 0.1f; // Adjust this for smoothness
+        _camera.target.x += (player.GetPosition().x - _camera.target.x) * smoothingFactor;
+        _camera.target.y += (player.GetPosition().y - _camera.target.y) * smoothingFactor;
         // Bound camera target within level limits
         if (_camera.target.x < width / 2)
             _camera.target.x = width / 2;
@@ -81,6 +83,10 @@ class Game {
 
     }
 
+    void Cleanup()
+    {
+        level.Cleanup();
+    }
 
     void Run() 
     {
@@ -126,6 +132,7 @@ class Game {
     { 
         player.Update(level);
         camera.Update(level, player);
+        level.Update();
 
         if (WindowShouldClose()) 
         {
@@ -140,21 +147,18 @@ class Game {
         BeginDrawing();
         ClearBackground(BLACK);
         camera.Begin();
-
-        level.Draw();
+        Camera2D cam = camera.GetCamera();
+        level.Draw(cam);
         player.Draw();
 
         Vector2 pos = GetMousePosition();
-        pos = GetScreenToWorld2D(pos, camera.GetCamera());
-        std::string posn = std::to_string((int)pos.x/N_TILE_WIDTH) + std::string(",") + std::to_string((int)pos.y/N_TILE_HEIGHT);
-        DrawText(posn.c_str(),10,100, 100, BLACK);
+
+        std::string fps = std::string("Frame rate is ") + std::to_string(GetFPS()) + std::string("\n");
+        Vector2 fpsPlacement = {10.0,100.0};
+        DrawText(fps.c_str(),GetScreenToWorld2D(fpsPlacement, cam).x, GetScreenToWorld2D(fpsPlacement, cam).y, 20, WHITE);
 
         camera.End();
         EndDrawing();
-
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            level.FloodFillStart();
-        }   
     }
 };
 
@@ -164,10 +168,13 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);    // Window configuration flags
     InitWindow(INITIAL_SCREEN_WIDTH, INITIAL_SCREEN_HEIGHT, "Beamer");
     SetTargetFPS(60);
+
     Level level({100,100});
     Game myGame(800, 600, level);
 
     myGame.Run();
+
     CloseWindow();
+    myGame.Cleanup();
     return 0;
 }
