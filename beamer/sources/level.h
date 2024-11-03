@@ -143,28 +143,16 @@ class Level
                         Color color = (Color){ 0, 228, 48, 30 } ;
                         DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, color);
                         Level::Edges edges = CheckAdjacentEqual(x,y);
+ 
                         BeginShaderMode(_shader);
-                        if (!edges.top) {
-                            Rectangle sourceRect = { 0, 0, N_TILE_WIDTH, TILE_WALL_OUTLINE_WIDTH };
-                            DrawTextureRec(_rectangle, sourceRect, { tileX, tileY - TILE_WALL_OUTLINE_WIDTH }, GREEN);
-                        }
-
-                        if (!edges.bottom) {
-                            Rectangle sourceRect = { 0, 0, N_TILE_WIDTH, TILE_WALL_OUTLINE_WIDTH };
-                            // Adjust the position for the bottom edge to align precisely with the bottom boundary
-                            DrawTextureRec(_rectangle, sourceRect, { tileX, tileY + N_TILE_HEIGHT }, GREEN);
-                        }
-
-                        if (!edges.left) {
-                            Rectangle sourceRect = { 0, 0, TILE_WALL_OUTLINE_WIDTH, N_TILE_HEIGHT };
-                            DrawTextureRec(_rectangle, sourceRect, { tileX - TILE_WALL_OUTLINE_WIDTH, tileY }, GREEN);
-                        }
-
-                        if (!edges.right) {
-                            Rectangle sourceRect = { 0, 0, TILE_WALL_OUTLINE_WIDTH, N_TILE_HEIGHT };
-                            // Adjust the position for the right edge to align precisely with the right boundary
-                            DrawTextureRec(_rectangle, sourceRect, { tileX + N_TILE_HEIGHT, tileY }, GREEN);
-                        }  
+                        if (!edges.top)
+                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, GREEN);
+                        if (!edges.bottom)
+                            DrawLineEx({tileX, tileY+N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
+                        if (!edges.left)
+                            DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
+                        if (!edges.right)
+                            DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
                         EndShaderMode();
                     }
                     if (sTileId == TILE_FLOOD)
