@@ -27,21 +27,8 @@ class Level
     int _width;
     int _height;
     int _passNumber = 0;
-    std::vector<char> _level; 
-    
-    //generic texture for rectangles
-    Texture2D _rectangle;
-    // shader stuff
+    std::vector<char> _level;  
     Shader _shader;
-    int _shaderTimeLoc;
-    int _shaderResolutionLoc;
-    int _shaderBlurRadiusLoc;
-    int _textureLoc;
-    Vector4 _colDiffuse;
-    Vector2 _resolution;
-    float _time;
-    float _blurRadius;
-
 
     public:
     Level(int width, int height) : _width(width), _height(height)
@@ -67,27 +54,12 @@ class Level
             exit(1);
         }
 
-
-        _rectangle = LoadTexture(ASSETS_PATH"/textures/rectangle.png");
-
-        _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/test.fs", GLSL_VERSION));
-        _time = 0.0;
-        _resolution  = {(float)GetScreenWidth(), (float)GetScreenHeight()};
-        _blurRadius = 10.0;
-
-        _shaderTimeLoc = GetShaderLocation(_shader, "u_time");
-        _shaderResolutionLoc = GetShaderLocation(_shader, "u_resolution");
-        _shaderBlurRadiusLoc = GetShaderLocation(_shader, "u_blurRadius");
-
-        SetShaderValue(_shader, _shaderTimeLoc, &_time, SHADER_UNIFORM_FLOAT);
-        SetShaderValue(_shader, _shaderResolutionLoc, &_resolution, SHADER_UNIFORM_VEC2);
-        SetShaderValue(_shader, _shaderBlurRadiusLoc, &_blurRadius, SHADER_UNIFORM_FLOAT);
+        _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/shader.fs", GLSL_VERSION));
     }
     
     void Cleanup()
     {
         UnloadShader(_shader);
-        UnloadTexture(_rectangle);
     }
 
     ~Level()
@@ -116,19 +88,27 @@ class Level
 
     void Update()
     {
-        _time += GetFrameTime()/4.0;
-        SetShaderValue(_shader, _shaderTimeLoc, &_time, SHADER_UNIFORM_FLOAT);
+    //    _time += GetFrameTime()/4.0;
+    //    SetShaderValue(_shader, _shaderTimeLoc, &_time, SHADER_UNIFORM_FLOAT);
     }
 
-
-
-    void Draw(Camera2D &camera)
+    RenderTexture2D LoadDrawTextures(Camera2D &camera)
     {
         int startX = fmax(0, (int)(camera.target.x - GetScreenWidth() / 2) / N_TILE_WIDTH);
         int endX = fmin(GetWidth(), (int)(camera.target.x + GetScreenWidth() / 2) / N_TILE_WIDTH + 1);
         int startY = fmax(0, (int)(camera.target.y - GetScreenHeight() / 2) / N_TILE_HEIGHT);
         int endY = fmin(GetHeight(), (int)(camera.target.y + GetScreenHeight() / 2) / N_TILE_HEIGHT + 1);
         // Loop through the tiles and only draw those within the camera view
+
+        RenderTexture2D glowSpritePass = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+        RenderTexture2D glowOutput = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+        int colDiffuseLoc = GetShaderLocation(_shader, "colDiffuse");
+        int resolutionLoc = GetShaderLocation(_shader, "resolution");
+        SetShaderValue(_shader, colDiffuseLoc, (float[4]){1.0f, 1.0f, 1.0f, 1.0f}, SHADER_UNIFORM_VEC4); // Set default to white
+        SetShaderValue(_shader, resolutionLoc, (float[2]){(float)GetScreenWidth(), (float)GetScreenHeight()}, SHADER_UNIFORM_VEC2); // Set default to white
+        BeginTextureMode(glowSpritePass);
+        BeginMode2D(camera);
+        ClearBackground(BLANK);
         for (int x = startX; x < endX; x++)
         {
             for (int y = startY; y < endY; y++)
@@ -139,30 +119,73 @@ class Level
                     auto sTileId = GetTile(x, y);
                     if (sTileId == TILE_WALL)
                     {
-
-                        Color color = (Color){ 0, 228, 48, 30 } ;
-                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, color);
-                        Level::Edges edges = CheckAdjacentEqual(x,y);
- 
-                        BeginShaderMode(_shader);
-                        if (!edges.top)
-                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.bottom)
-                            DrawLineEx({tileX, tileY+N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.left)
-                            DrawLineEx({tileX, tileY}, {tileX, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        if (!edges.right)
-                            DrawLineEx({tileX+N_TILE_WIDTH, tileY}, {tileX+N_TILE_WIDTH, tileY+N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, GREEN);
-                        EndShaderMode();
+                        Level::Edges adjacentTiles = CheckAdjacentEqual(x, y);
+                        Color outlineColor = RED;
+                        if (!adjacentTiles.top)
+                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.bottom)
+                            DrawLineEx({tileX, tileY + N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.left)
+                            DrawLineEx({tileX, tileY}, {tileX, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.right)
+                            DrawLineEx({tileX + N_TILE_WIDTH, tileY}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
                     }
-                    if (sTileId == TILE_FLOOD)
-                    {
-                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, BLUE);                       
-                    }
-
                 }
             }
         }
+        EndMode2D();
+        EndTextureMode();
+
+        Rectangle screen_rect = {0,0, (float)GetScreenWidth(), (float)GetScreenHeight()};
+        Rectangle texture_rect = {0,0, (float)glowSpritePass.texture.width, (float)glowSpritePass.texture.height};
+        BeginTextureMode(glowOutput);
+
+            BeginShaderMode(_shader);
+                DrawTexturePro(glowSpritePass.texture, texture_rect, screen_rect, {0, 0}, 0, WHITE);
+            EndShaderMode();
+
+        EndTextureMode();
+
+        UnloadRenderTexture(glowSpritePass);
+
+        return glowOutput;
+    }
+    
+    void Draw(Camera2D &camera, Texture2D texture)
+    {
+        BeginMode2D(camera);
+        int startX = fmax(0, (int)(camera.target.x - GetScreenWidth() / 2) / N_TILE_WIDTH);
+        int endX = fmin(GetWidth(), (int)(camera.target.x + GetScreenWidth() / 2) / N_TILE_WIDTH + 1);
+        int startY = fmax(0, (int)(camera.target.y - GetScreenHeight() / 2) / N_TILE_HEIGHT);
+        int endY = fmin(GetHeight(), (int)(camera.target.y + GetScreenHeight() / 2) / N_TILE_HEIGHT + 1);
+
+        for (int x = startX; x < endX; x++)
+        {
+            for (int y = startY; y < endY; y++)
+            {
+
+                float tileX = x * N_TILE_WIDTH;
+                float tileY = y * N_TILE_HEIGHT;
+                auto sTileId = GetTile(x, y);
+                if (sTileId == TILE_WALL)
+                {
+                    Color color = (Color){0, 228, 48, 30};
+                    DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, DARKGREEN);
+                }
+            }
+        }
+        EndMode2D();
+        // Draw all the non-glowy stuff here
+        Rectangle screen_rect = {0,0, (float)GetScreenWidth(), (float)GetScreenHeight()};
+        Rectangle texture_rect = {0,0, (float)texture.width, (float)texture.height};
+        //BeginShaderMode(compositeShader);
+        // Set the blending mode
+BeginBlendMode(BLEND_ADD_COLORS);
+            DrawTexturePro(texture, texture_rect, screen_rect, {0,0}, 0, WHITE);
+        //EndShaderMode();
+        EndBlendMode();
+
+
     }
 
     private:

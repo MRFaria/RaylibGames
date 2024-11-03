@@ -143,22 +143,23 @@ class Game {
 
     void Draw() 
     {
-
-        BeginDrawing();
-        ClearBackground(BLACK);
-        camera.Begin();
         Camera2D cam = camera.GetCamera();
-        level.Draw(cam);
-        player.Draw();
-
+        RenderTexture2D rText = level.LoadDrawTextures(cam);
         Vector2 pos = GetMousePosition();
-
         std::string fps = std::string("Frame rate is ") + std::to_string(GetFPS()) + std::string("\n");
         Vector2 fpsPlacement = {10.0,100.0};
-        DrawText(fps.c_str(),GetScreenToWorld2D(fpsPlacement, cam).x, GetScreenToWorld2D(fpsPlacement, cam).y, 20, WHITE);
+        
+        BeginDrawing();
+        ClearBackground(BLACK);
 
+        level.Draw(cam, rText.texture);
+        camera.Begin();
+        player.Draw();
+        DrawText(fps.c_str(),GetScreenToWorld2D(fpsPlacement, cam).x, GetScreenToWorld2D(fpsPlacement, cam).y, 20, WHITE);
         camera.End();
         EndDrawing();
+
+        UnloadRenderTexture(rText);
     }
 };
 
