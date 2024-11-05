@@ -1,0 +1,29 @@
+#ifndef GAME_H
+#define GAME_H
+
+#include "raylib.h"
+#include "Level.h"
+#include "player.h"
+#include <string>
+
+class Game {
+public:
+    Game(int screenWidth, int screenHeight, Level &level);
+    ~Game();
+    void Run();
+    void Cleanup();
+
+private:
+    const char* title;
+    bool isRunning;
+    Level level;
+    Camera2D camera;
+    Player player;
+
+    void Init();
+    void Update(float delta);
+    void Draw();
+    void CameraUpdate();
+};
+
+#endif // GAME_H

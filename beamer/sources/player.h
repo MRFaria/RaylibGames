@@ -5,7 +5,7 @@
 #include "helpers.h"
 #include "swept-aabb.h"  // Include the header where `helper::DynamicRectVsRect` is declared
 #include "raylib.h"
-#include "level.h"
+#include "Level.h"
 
 class Player {
 public:
@@ -87,10 +87,10 @@ public:
 
         // Use the player's original collision rect size
         Rectangle playerColRect = rect;
-        //playerColRect.y -= TILE_WALL_OUTLINE_WIDTH/2.0;
-        //playerColRect.x -= TILE_WALL_OUTLINE_WIDTH/2.0;
-        //playerColRect.width += TILE_WALL_OUTLINE_WIDTH;
-        //playerColRect.height += TILE_WALL_OUTLINE_WIDTH;
+        playerColRect.y -= TILE_WALL_OUTLINE_WIDTH/2.0;
+        playerColRect.x -= TILE_WALL_OUTLINE_WIDTH/2.0;
+        playerColRect.width += TILE_WALL_OUTLINE_WIDTH;
+        playerColRect.height += TILE_WALL_OUTLINE_WIDTH;
         // Handle X-axis movement
         Vector2 xVelocity = {velocity.x, 0}; // Only move along the X axis
         if (CheckCollisionsWithLevel(level, playerColRect, xVelocity, contactPoint, contactNormal, contactTime)) {
