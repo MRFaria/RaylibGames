@@ -12,6 +12,11 @@ Vector2 Player::GetPosition() {
     return Vector2{rect.x, rect.y};
 }
 
+Rectangle Player::GetRect()
+{
+    return rect;
+}
+
 void Player::SetPosition(Vector2 pos) {
     rect.x = pos.x;
     rect.y = pos.y;

@@ -1,30 +1,20 @@
 #version 330
 
-// Input vertex attributes (from vertex shader)
+#ifdef GL_ES
+precision mediump float;
+#endif
+
 in vec2 fragTexCoord;
 in vec4 fragColor;
 
 // Input uniform values
 uniform sampler2D texture0;
-uniform vec4 colDiffuse;
-uniform vec2 resolution;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
 
-// Output fragment color
-out vec4 finalColor;
-
-float offset[3] = float[](0.0, 0.5, 1.0);
-float weight[3] = float[](0.2270270270, 0.3162162162, 0.0702702703);
-
-void main()
-{
-    // Texel color fetching from texture sampler
-    vec3 texelColor = texture(texture0, fragTexCoord).rgb*weight[0];
-
-    for (int i = 1; i < 3; i++)
-    {
-        texelColor += texture(texture0, fragTexCoord + vec2(offset[i])/resolution.y, 0.0).rgb*weight[i];
-        texelColor += texture(texture0, fragTexCoord - vec2(offset[i])/resolution.y, 0.0).rgb*weight[i];
-    }
-
-    finalColor = vec4(texelColor, 1.0);
+void main() {
+	vec2 st = gl_FragCoord.xy/u_resolution;
+	gl_FragColor = vec4(st.x,st.y,0.0,1.0)*texture(texture0, fragTexCoord).a;
 }
+

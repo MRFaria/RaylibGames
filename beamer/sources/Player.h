@@ -14,6 +14,7 @@ public:
     void Draw();
     
     Vector2 GetPosition();
+    Rectangle GetRect();
     void SetPosition(Vector2 pos);
 
 private:

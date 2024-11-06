@@ -6,9 +6,9 @@ Level::Level(int width, int height) : _width(width), _height(height)
     int attempts = 0;
     InitLevel();
     auto goodLevel = GenerateLevel();
-    while(!goodLevel && attempts < 5)
+    while (!goodLevel && attempts < 5)
     {
-        for(int i=0; i<_width*_height; i++)
+        for (int i = 0; i < _width * _height; i++)
         {
             _level[i] = TILE_WALL;
             _floodFill[i] = TILE_WALL;
@@ -17,13 +17,13 @@ Level::Level(int width, int height) : _width(width), _height(height)
         attempts++;
         goodLevel = GenerateLevel();
     }
-    if(!goodLevel)
+    if (!goodLevel)
     {
         printf("Failed to generate a nice level\n");
         exit(1);
     }
 
-    _shader = LoadShader(0, TextFormat(ASSETS_PATH"/shaders/glsl%i/shader.fs", GLSL_VERSION));
+    _shader = LoadShader(0, TextFormat(ASSETS_PATH "/shaders/glsl%i/shader.fs", GLSL_VERSION));
 }
 
 // Destructor
@@ -48,16 +48,16 @@ int Level::GetHeight()
 
 char Level::GetTile(int x, int y)
 {
-    if((y>=0 && y<_height) && (x>=0 && x<_width)) 
-        return _level[y*_width + x];
+    if ((y >= 0 && y < _height) && (x >= 0 && x < _width))
+        return _level[y * _width + x];
     else
         return TILE_WALL;
 }
 
 char Level::GetFloodTile(int x, int y)
 {
-    if((y>=0 && y<_height) && (x>=0 && x<_width)) 
-        return _floodFill[y*_width + x];
+    if ((y >= 0 && y < _height) && (x >= 0 && x < _width))
+        return _floodFill[y * _width + x];
     else
         return TILE_WALL;
 }
@@ -154,16 +154,16 @@ void Level::Draw(Camera2D &camera, Texture2D texture)
     Rectangle screen_rect = {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()};
     Rectangle texture_rect = {0, 0, (float)texture.width, (float)texture.height};
 
-    BeginBlendMode(BLEND_ADD_COLORS);
+    //BeginBlendMode(BLEND_ADD_COLORS);
     DrawTexturePro(texture, texture_rect, screen_rect, {0, 0}, 0, WHITE);
-    EndBlendMode();
+    //EndBlendMode();
 }
 
 void Level::InitLevel()
 {
-    for(int y=0; y<_height; y++)
+    for (int y = 0; y < _height; y++)
     {
-        for(int x=0; x<_width; x++)           
+        for (int x = 0; x < _width; x++)
         {
             _level.push_back(TILE_WALL);
             _floodFill.push_back(TILE_WALL);
@@ -173,13 +173,13 @@ void Level::InitLevel()
 
 bool Level::GenerateLevel()
 {
-    for(int y=0; y<_height; y++)
+    for (int y = 0; y < _height; y++)
     {
-        for(int x=0; x<_width; x++)  
-        { 
+        for (int x = 0; x < _width; x++)
+        {
             if (x == 0 || x == _width - 1 || y == 0 || y == _height - 1)
                 _level[y * _width + x] = TILE_WALL;
-            else if(GetRandomValue(0, 100) < WALL_CHANCE)
+            else if (GetRandomValue(0, 100) < WALL_CHANCE)
                 _level[y * _width + x] = TILE_WALL;
             else
                 _level[y * _width + x] = TILE_EMPTY;
@@ -195,13 +195,13 @@ bool Level::GenerateLevel()
 Level::Edges Level::CheckAdjacentEqual(int x, int y)
 {
     Edges edges = {false, false, false, false};
-    if(GetTile(x - 1, y) == GetTile(x, y))
+    if (GetTile(x - 1, y) == GetTile(x, y))
         edges.left = true;
-    if(GetTile(x, y - 1) == GetTile(x, y))
-        edges.top = true;        
-    if(GetTile(x + 1, y) == GetTile(x, y))
+    if (GetTile(x, y - 1) == GetTile(x, y))
+        edges.top = true;
+    if (GetTile(x + 1, y) == GetTile(x, y))
         edges.right = true;
-    if(GetTile(x, y + 1) == GetTile(x, y))
+    if (GetTile(x, y + 1) == GetTile(x, y))
         edges.bottom = true;
     return edges;
 }
@@ -209,12 +209,14 @@ Level::Edges Level::CheckAdjacentEqual(int x, int y)
 int Level::GetWallTilesWithinNSteps(int x, int y, int n)
 {
     int count = 0;
-    for(int iy = y - n; iy <= y + n; iy++)
+    for (int iy = y - n; iy <= y + n; iy++)
     {
-        for(int ix = x - n; ix <= x + n; ix++)           
+        for (int ix = x - n; ix <= x + n; ix++)
         {
-            if (ix == x && iy == y) continue;
-            if (GetTile(ix, iy) == TILE_WALL) count++;
+            if (ix == x && iy == y)
+                continue;
+            if (GetTile(ix, iy) == TILE_WALL)
+                count++;
         }
     }
     return count;
@@ -226,9 +228,9 @@ void Level::CellAutomataPass()
     std::vector<char> _buffer = _level;
 
     // Loop through the grid
-    for(int y = 0; y < _height; y++) // Change from <= to <
+    for (int y = 0; y < _height; y++) // Change from <= to <
     {
-        for(int x = 0; x < _width; x++) // Change from <= to <
+        for (int x = 0; x < _width; x++) // Change from <= to <
         {
             // Determine if the current tile is a wall
             if (GetTile(x, y) == TILE_WALL)
@@ -249,15 +251,20 @@ void Level::CellAutomataPass()
 
 void Level::FloodFill(int x, int y)
 {
-    if (x < 0 || x >= _width || y < 0 || y >= _height || _floodFill[y * _width + x] == TILE_FLOOD) return;
+    if (x < 0 || x >= _width || y < 0 || y >= _height || _floodFill[y * _width + x] == TILE_FLOOD)
+        return;
 
     _floodFill[y * _width + x] = TILE_FLOOD;
     Edges edges = CheckAdjacentEqual(x, y);
 
-    if (edges.top) FloodFill(x, y - 1);
-    if (edges.bottom) FloodFill(x, y + 1);
-    if (edges.right) FloodFill(x + 1, y);
-    if (edges.left) FloodFill(x - 1, y);
+    if (edges.top)
+        FloodFill(x, y - 1);
+    if (edges.bottom)
+        FloodFill(x, y + 1);
+    if (edges.right)
+        FloodFill(x + 1, y);
+    if (edges.left)
+        FloodFill(x - 1, y);
 }
 
 float Level::FloodFillStart()
@@ -276,13 +283,15 @@ float Level::FloodFillStart()
         attempts++;
     }
 
-    if (tile != TILE_EMPTY) return 0.0;
+    if (tile != TILE_EMPTY)
+        return 0.0;
 
     FloodFill(x, y);
     int sizeContinuousLevel = 0;
     for (int i = 0; i < _height * _width; i++)
     {
-        if (_floodFill[i] == TILE_FLOOD) sizeContinuousLevel++;
+        if (_floodFill[i] == TILE_FLOOD)
+            sizeContinuousLevel++;
     }
 
     printf("Size is of flood %lf\n", sizeContinuousLevel * 100.0 / (_width * _height));
