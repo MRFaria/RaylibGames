@@ -33,8 +33,10 @@ public:
     char GetTile(int x, int y);
     char GetFloodTile(int x, int y);
     void Update();
-    RenderTexture2D LoadDrawTextures(Camera2D &camera);
-    void Draw(Camera2D &camera, Texture2D texture);
+    Texture2D DrawLevelToTexture(Camera2D &camera);
+    void LoadRenderTextures();
+    void UnloadRenderTextures();
+    //void Draw(Camera2D &camera, Texture2D texture);
 
     void FloodFill(int x, int y);
     float FloodFillStart();
@@ -50,6 +52,11 @@ private:
     int _width;
     int _height;
     int _passNumber = 0;
+    int _screenWidth;
+    int _screenHeight;
+    RenderTexture2D _glowSpritePassRT;
+    RenderTexture2D _glowOutputRT;
+    RenderTexture2D _levelRT;
     std::vector<char> _level;
     std::vector<char> _floodFill;
     Shader _shader;

@@ -11,7 +11,7 @@ class Player {
 public:
     Player();  // Constructor
     void Update(Level& level);
-    void Draw();
+    void Draw(Camera2D &camera);
     
     Vector2 GetPosition();
     Rectangle GetRect();

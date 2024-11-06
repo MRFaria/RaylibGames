@@ -87,22 +87,26 @@ void Game::Update(float delta)
     }
 }
 
+void Game::DrawFramerate(Camera2D &camera)
+{
+    BeginMode2D(camera);
+        std::string fps = "Frame rate is " + std::to_string(GetFPS()) + "\n";
+        Vector2 fpsPlacement = {50.0f, 50.0f};
+        DrawText(fps.c_str(), GetScreenToWorld2D(fpsPlacement, camera).x, GetScreenToWorld2D(fpsPlacement, camera).y, 20, WHITE);
+    EndMode2D();
+}
+
 void Game::Draw()
 {
-    RenderTexture2D rText = level.LoadDrawTextures(camera);
-    Vector2 pos = GetMousePosition();
-    std::string fps = "Frame rate is " + std::to_string(GetFPS()) + "\n";
-    Vector2 fpsPlacement = {10.0f, 100.0f};
+
+
+
 
     BeginDrawing();
-    ClearBackground(BLACK);
-
-    level.Draw(camera, rText.texture);
-    BeginMode2D(camera);
-    player.Draw();
-    DrawText(fps.c_str(), GetScreenToWorld2D(fpsPlacement, camera).x, GetScreenToWorld2D(fpsPlacement, camera).y, 20, WHITE);
-    EndMode2D();
+        ClearBackground(BLACK);
+        Texture2D levelTexture = level.DrawLevelToTexture(camera);
+        DrawTextureRec(levelTexture, {0.0F, 0.0F, (float)levelTexture.width, -(float)levelTexture.height},{0.0F, 0.0F}, WHITE);
+        player.Draw(camera);
+        DrawFramerate(camera);
     EndDrawing();
-
-    UnloadRenderTexture(rText);
 }

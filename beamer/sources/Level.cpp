@@ -24,6 +24,9 @@ Level::Level(int width, int height) : _width(width), _height(height)
     }
 
     _shader = LoadShader(0, TextFormat(ASSETS_PATH "/shaders/glsl%i/shader.fs", GLSL_VERSION));
+    _screenWidth = GetScreenWidth();
+    _screenHeight = GetScreenHeight();
+    LoadRenderTextures();
 }
 
 // Destructor
@@ -33,6 +36,7 @@ Level::~Level()
 
 void Level::Cleanup()
 {
+    UnloadRenderTextures();
     UnloadShader(_shader);
 }
 
@@ -64,100 +68,147 @@ char Level::GetFloodTile(int x, int y)
 
 void Level::Update()
 {
-    // Update logic if needed
+    if(GetScreenWidth() !=_screenWidth || GetScreenHeight() != _screenHeight)
+    {
+        UnloadRenderTextures();
+        _screenWidth = GetScreenWidth();
+        _screenHeight = GetScreenHeight();
+        LoadRenderTextures();
+    }
 }
 
-RenderTexture2D Level::LoadDrawTextures(Camera2D &camera)
+void Level::LoadRenderTextures()
 {
-    int startX = fmax(0, (int)(camera.target.x - GetScreenWidth() / 2) / N_TILE_WIDTH);
-    int endX = fmin(GetWidth(), (int)(camera.target.x + GetScreenWidth() / 2) / N_TILE_WIDTH + 1);
-    int startY = fmax(0, (int)(camera.target.y - GetScreenHeight() / 2) / N_TILE_HEIGHT);
-    int endY = fmin(GetHeight(), (int)(camera.target.y + GetScreenHeight() / 2) / N_TILE_HEIGHT + 1);
+    _glowSpritePassRT = LoadRenderTexture(_screenWidth, _screenHeight);
+    _glowOutputRT = LoadRenderTexture(_screenWidth, _screenHeight);
+    _levelRT = LoadRenderTexture(_screenWidth, _screenHeight);
+}
 
-    RenderTexture2D glowSpritePass = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
-    RenderTexture2D glowOutput = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+void Level::UnloadRenderTextures()
+{
+    UnloadRenderTexture(_levelRT);
+    UnloadRenderTexture(_glowOutputRT);
+    UnloadRenderTexture(_glowSpritePassRT);   
+}
 
-    int colDiffuseLoc = GetShaderLocation(_shader, "colDiffuse");
-    int resolutionLoc = GetShaderLocation(_shader, "resolution");
-    SetShaderValue(_shader, colDiffuseLoc, (float[4]){1.0f, 1.0f, 1.0f, 1.0f}, SHADER_UNIFORM_VEC4);
-    SetShaderValue(_shader, resolutionLoc, (float[2]){(float)GetScreenWidth(), (float)GetScreenHeight()}, SHADER_UNIFORM_VEC2);
+Texture2D Level::DrawLevelToTexture(Camera2D &camera)
+{
+    // note camera should only be applied once per draw call. And it should be when drawn not later
+    int startX = 0;
+    int endX = GetWidth();
+    int startY = 0;
+    int endY = GetHeight();
 
-    BeginTextureMode(glowSpritePass);
-    BeginMode2D(camera);
-    ClearBackground(BLANK);
+    // Pass 1: Draw outlines or glow effects onto _glowSpritePassRT
+    BeginTextureMode(_glowSpritePassRT);
+        ClearBackground(BLANK); // Start with a clean texture
+        BeginMode2D(camera);     // Apply the camera to the glow pass
 
-    for (int x = startX; x < endX; x++)
-    {
-        for (int y = startY; y < endY; y++)
-        {
-            float tileX = x * N_TILE_WIDTH;
-            float tileY = y * N_TILE_HEIGHT;
-            auto sTileId = GetTile(x, y);
-            if (sTileId == TILE_WALL)
+            // Draw outlines based on tile adjacency
+            for (int x = startX; x < endX; x++)
             {
-                Edges adjacentTiles = CheckAdjacentEqual(x, y);
-                Color outlineColor = RED;
-                if (!adjacentTiles.top)
-                    DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
-                if (!adjacentTiles.bottom)
-                    DrawLineEx({tileX, tileY + N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
-                if (!adjacentTiles.left)
-                    DrawLineEx({tileX, tileY}, {tileX, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
-                if (!adjacentTiles.right)
-                    DrawLineEx({tileX + N_TILE_WIDTH, tileY}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
-            }
-        }
-    }
+                for (int y = startY; y < endY; y++)
+                {
+                    float tileX = x * N_TILE_WIDTH;
+                    float tileY = y * N_TILE_HEIGHT;
+                    auto sTileId = GetTile(x, y);
 
-    EndMode2D();
+                    if (sTileId == TILE_WALL)
+                    {
+                        Edges adjacentTiles = CheckAdjacentEqual(x, y);
+                        Color outlineColor = RED;
+
+                        if (!adjacentTiles.top)
+                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.bottom)
+                            DrawLineEx({tileX, tileY + N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.left)
+                            DrawLineEx({tileX, tileY}, {tileX, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                        if (!adjacentTiles.right)
+                            DrawLineEx({tileX + N_TILE_WIDTH, tileY}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                    }
+                }
+            }
+
+        EndMode2D();
     EndTextureMode();
 
-    Rectangle screen_rect = {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()};
-    Rectangle texture_rect = {0, 0, (float)glowSpritePass.texture.width, (float)glowSpritePass.texture.height};
 
-    BeginTextureMode(glowOutput);
-    BeginShaderMode(_shader);
-    DrawTexturePro(glowSpritePass.texture, texture_rect, screen_rect, {0, 0}, 0, WHITE);
-    EndShaderMode();
+    int resolutionLoc = GetShaderLocation(_shader, "u_resolution");
+    SetShaderValue(_shader, resolutionLoc, (float[2]){(float)_screenWidth, (float)_screenHeight}, SHADER_UNIFORM_VEC2);
+
+    // Apply shader to the glow pass and render it to _glowOutputRT
+    BeginTextureMode(_glowOutputRT);
+        ClearBackground(BLANK); // Clear any previous data
+        BeginShaderMode(_shader); // Start the shader
+
+            DrawTexture(_glowSpritePassRT.texture, 0, 0, WHITE); // Directly draw _glowSpritePassRT onto _glowOutputRT
+
+        EndShaderMode(); // End shader application
     EndTextureMode();
 
-    UnloadRenderTexture(glowSpritePass);
-
-    return glowOutput;
-}
-
-void Level::Draw(Camera2D &camera, Texture2D texture)
-{
-    BeginMode2D(camera);
-
-    int startX = fmax(0, (int)(camera.target.x - GetScreenWidth() / 2) / N_TILE_WIDTH);
-    int endX = fmin(GetWidth(), (int)(camera.target.x + GetScreenWidth() / 2) / N_TILE_WIDTH + 1);
-    int startY = fmax(0, (int)(camera.target.y - GetScreenHeight() / 2) / N_TILE_HEIGHT);
-    int endY = fmin(GetHeight(), (int)(camera.target.y + GetScreenHeight() / 2) / N_TILE_HEIGHT + 1);
-
-    for (int x = startX; x < endX; x++)
-    {
-        for (int y = startY; y < endY; y++)
-        {
-            float tileX = x * N_TILE_WIDTH;
-            float tileY = y * N_TILE_HEIGHT;
-            auto sTileId = GetTile(x, y);
-            if (sTileId == TILE_WALL)
+    // Pass 3: Render the main level onto _levelRT, incorporating the glow texture
+    BeginTextureMode(_levelRT);
+        ClearBackground(BLANK); // Clear before drawing the level
+        BeginMode2D(camera);     // Apply camera for the final composite
+            // Draw main level tiles
+            for (int x = startX; x < endX; x++)
             {
-                DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, DARKGREEN);
+                for (int y = startY; y < endY; y++)
+                {
+                    float tileX = x * N_TILE_WIDTH;
+                    float tileY = y * N_TILE_HEIGHT;
+                    auto sTileId = GetTile(x, y);
+
+                    if (sTileId == TILE_WALL)
+                    {
+                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, DARKBLUE); // Main wall tiles
+                    }
+                }
             }
-        }
-    }
 
-    EndMode2D();
+            // Draw the glow effect layer on top (within the same camera scope)
 
-    Rectangle screen_rect = {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()};
-    Rectangle texture_rect = {0, 0, (float)texture.width, (float)texture.height};
 
-    //BeginBlendMode(BLEND_ADD_COLORS);
-    DrawTexturePro(texture, texture_rect, screen_rect, {0, 0}, 0, WHITE);
-    //EndBlendMode();
+        EndMode2D();
+                    DrawTexture(_glowOutputRT.texture, 0, 0, WHITE);
+    EndTextureMode();
+
+    return _levelRT.texture; // Return the final composite texture
 }
+
+// void Level::Draw(Camera2D &camera)
+// {
+//     BeginMode2D(camera);
+
+//     int startX = fmax(0, (int)(camera.target.x - _screenWidth / 2) / N_TILE_WIDTH);
+//     int endX = fmin(GetWidth(), (int)(camera.target.x + _screenWidth / 2) / N_TILE_WIDTH + 1);
+//     int startY = fmax(0, (int)(camera.target.y - _screenHeight / 2) / N_TILE_HEIGHT);
+//     int endY = fmin(GetHeight(), (int)(camera.target.y + _screenHeight / 2) / N_TILE_HEIGHT + 1);
+
+//     for (int x = startX; x < endX; x++)
+//     {
+//         for (int y = startY; y < endY; y++)
+//         {
+//             float tileX = x * N_TILE_WIDTH;
+//             float tileY = y * N_TILE_HEIGHT;
+//             auto sTileId = GetTile(x, y);
+//             if (sTileId == TILE_WALL)
+//             {
+//                 DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, DARKGREEN);
+//             }
+//         }
+//     }
+
+//     EndMode2D();
+
+//     Rectangle screen_rect = {0, 0, (float)_screenWidth, (float)_screenHeight};
+//     Rectangle texture_rect = {0, 0, (float)texture.width, (float)texture.height};
+
+//     //BeginBlendMode(BLEND_ADD_COLORS);
+//     DrawTexturePro(texture, texture_rect, screen_rect, {0, 0}, 0, WHITE);
+//     //EndBlendMode();
+// }
 
 void Level::InitLevel()
 {

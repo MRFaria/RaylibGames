@@ -24,6 +24,7 @@ private:
     void Update(float delta);
     void Draw();
     void CameraUpdate();
+    void DrawFramerate(Camera2D &camera);
 };
 
 #endif // GAME_H

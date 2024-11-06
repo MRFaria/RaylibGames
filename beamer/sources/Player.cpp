@@ -2,7 +2,7 @@
 
 // Constructor
 Player::Player() {
-    SetPosition(Vector2{400, 300}); // Center of the screen
+    SetPosition(Vector2{200, 200}); // Center of the screen
     color = BLUE;                   // Player color
     rect.height = 50;
     rect.width = rect.height;
@@ -99,8 +99,19 @@ void Player::Update(Level& level) {
     ClampToWorldBounds();
 }
 
-void Player::Draw() {
-    DrawRectangle(rect.x, rect.y, rect.width, rect.height, color);
+void Player::Draw(Camera2D &camera) {
+    BeginMode2D(camera);
+        DrawCircleV(GetPosition(), 20, BLUE);
+
+        // Smaller circles (attached to the body)
+        DrawCircleV((Vector2){ GetPosition().x + 30, GetPosition().y }, 10, RED);
+        DrawCircleV((Vector2){ GetPosition().x - 30, GetPosition().y }, 10, GREEN);
+        DrawCircleV((Vector2){ GetPosition().x, GetPosition().y + 30 }, 10, YELLOW);
+
+        // A rectangle (could represent a shield or additional element)
+        DrawRectangleV((Vector2){ GetPosition().x - 15, GetPosition().y - 35 }, (Vector2){ 30, 10 }, PURPLE);
+        //DrawRectangle(rect.x, rect.y, rect.width, rect.height, color);
+    EndMode2D();
 }
 
 void Player::ClampToWorldBounds() {
