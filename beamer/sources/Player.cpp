@@ -4,25 +4,34 @@
 Player::Player() {
     SetPosition(Vector2{200, 200}); // Center of the screen
     color = BLUE;                   // Player color
-    rect.height = 50;
-    rect.width = rect.height;
+    texture = LoadTexture(ASSETS_PATH"textures/rectangle.png");
+
+    playerRect.height = 50;
+    playerRect.width = playerRect.height;
+}
+
+Player::~Player()
+{
+    UnloadTexture(texture);
 }
 
 Vector2 Player::GetPosition() {
-    return Vector2{rect.x, rect.y};
+    return Vector2{playerRect.x, playerRect.y};
 }
 
 Rectangle Player::GetRect()
 {
-    return rect;
+    return playerRect;
 }
 
 void Player::SetPosition(Vector2 pos) {
-    rect.x = pos.x;
-    rect.y = pos.y;
+    playerRect.x = pos.x;
+    playerRect.y = pos.y;
 }
 
 void Player::Update(Level& level) {
+
+    rotation = rotation + 20*GetFrameTime();
     Vector2 originalPosition = GetPosition(); // Store original position
 
     // Movement logic
@@ -73,7 +82,7 @@ void Player::Update(Level& level) {
     float contactTime;
 
     // Use the player's original collision rect size
-    Rectangle playerColRect = rect;
+    Rectangle playerColRect = playerRect;
     playerColRect.y -= TILE_WALL_OUTLINE_WIDTH / 2.0;
     playerColRect.x -= TILE_WALL_OUTLINE_WIDTH / 2.0;
     playerColRect.width += TILE_WALL_OUTLINE_WIDTH;
@@ -101,27 +110,24 @@ void Player::Update(Level& level) {
 
 void Player::Draw(Camera2D &camera) {
     BeginMode2D(camera);
-        DrawCircleV(GetPosition(), 20, BLUE);
+        Rectangle sourceRec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+        Rectangle destRec = { playerRect.x, playerRect.y, playerRect.width, playerRect.height };
+        Vector2 origin = { playerRect.width/2.0, playerRect.height/2.0 }; // Set origin to texture's bottom right corner
 
-        // Smaller circles (attached to the body)
-        DrawCircleV((Vector2){ GetPosition().x + 30, GetPosition().y }, 10, RED);
-        DrawCircleV((Vector2){ GetPosition().x - 30, GetPosition().y }, 10, GREEN);
-        DrawCircleV((Vector2){ GetPosition().x, GetPosition().y + 30 }, 10, YELLOW);
-
-        // A rectangle (could represent a shield or additional element)
-        DrawRectangleV((Vector2){ GetPosition().x - 15, GetPosition().y - 35 }, (Vector2){ 30, 10 }, PURPLE);
+        //rotation = 0.0f; // Rotation angle in degrees
+        DrawTexturePro(texture, sourceRec, destRec, origin, rotation, WHITE);
         //DrawRectangle(rect.x, rect.y, rect.width, rect.height, color);
     EndMode2D();
 }
 
 void Player::ClampToWorldBounds() {
-    if (rect.x < 0) rect.x = 0;  // Left boundary
-    if (rect.x + rect.width > GetScreenWidth() * N_TILE_WIDTH) 
-        rect.x = GetScreenWidth() * N_TILE_WIDTH - rect.width;  // Right boundary
+    if (playerRect.x < 0) playerRect.x = 0;  // Left boundary
+    if (playerRect.x + playerRect.width > GetScreenWidth() * N_TILE_WIDTH) 
+        playerRect.x = GetScreenWidth() * N_TILE_WIDTH - playerRect.width;  // Right boundary
 
-    if (rect.y < 0) rect.y = 0;  // Top boundary
-    if (rect.y + rect.height > GetScreenHeight() * N_TILE_HEIGHT) 
-        rect.y = GetScreenHeight() * N_TILE_HEIGHT - rect.height;  // Bottom boundary
+    if (playerRect.y < 0) playerRect.y = 0;  // Top boundary
+    if (playerRect.y + playerRect.height > GetScreenHeight() * N_TILE_HEIGHT) 
+        playerRect.y = GetScreenHeight() * N_TILE_HEIGHT - playerRect.height;  // Bottom boundary
 }
 
 bool Player::CheckCollisionsWithLevel(Level& level, Rectangle rectP, Vector2 velocityP, Vector2& contactPoint, Vector2& contactNormal, float& contactTime) {
