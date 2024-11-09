@@ -15,6 +15,6 @@ const int NUM_PASSES = 10;
 const int INITIAL_SCREEN_HEIGHT = 600;
 const int INITIAL_SCREEN_WIDTH = 800;
 
-const int TILE_WALL_OUTLINE_WIDTH = 3;
+const int TILE_WALL_OUTLINE_WIDTH = 4;
 
 #endif

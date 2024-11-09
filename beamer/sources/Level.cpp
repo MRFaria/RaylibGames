@@ -162,7 +162,8 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
 
                     if (sTileId == TILE_WALL)
                     {
-                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, DARKBLUE); // Main wall tiles
+                        Color WALL_COLOR = { 0, 255, 0, 200 };
+                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, WALL_COLOR ); // Main wall tiles
                     }
                 }
             }
@@ -171,7 +172,7 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
 
 
         EndMode2D();
-                    DrawTexture(_glowOutputRT.texture, 0, 0, WHITE);
+        DrawTexture(_glowOutputRT.texture, 0, 0, WHITE);
     EndTextureMode();
 
     return _levelRT.texture; // Return the final composite texture

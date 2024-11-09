@@ -31,7 +31,7 @@ void Player::SetPosition(Vector2 pos) {
 
 void Player::Update(Level& level) {
 
-    rotation = rotation + 20*GetFrameTime();
+    rotation = rotation + 40*GetFrameTime();
     Vector2 originalPosition = GetPosition(); // Store original position
 
     // Movement logic
