@@ -26,5 +26,4 @@ inline void SetSize(Rectangle& rect, Vector2 size)
     rect.width = size.x;   // Sets the width correctly
     rect.height = size.y;  // Sets the height correctly
 }
-
 #endif //OPERATORS_H

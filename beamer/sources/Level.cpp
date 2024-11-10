@@ -109,8 +109,8 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
             {
                 for (int y = startY; y < endY; y++)
                 {
-                    float tileX = x * N_TILE_WIDTH;
-                    float tileY = y * N_TILE_HEIGHT;
+                    float tileX = x * N_TILE_SIZE;
+                    float tileY = y * N_TILE_SIZE;
                     auto sTileId = GetTile(x, y);
 
                     if (sTileId == TILE_WALL)
@@ -119,13 +119,13 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
                         Color outlineColor = RED;
 
                         if (!adjacentTiles.top)
-                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_WIDTH, tileY}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                            DrawLineEx({tileX, tileY}, {tileX + N_TILE_SIZE, tileY}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
                         if (!adjacentTiles.bottom)
-                            DrawLineEx({tileX, tileY + N_TILE_HEIGHT}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                            DrawLineEx({tileX, tileY + N_TILE_SIZE}, {tileX + N_TILE_SIZE, tileY + N_TILE_SIZE}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
                         if (!adjacentTiles.left)
-                            DrawLineEx({tileX, tileY}, {tileX, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                            DrawLineEx({tileX, tileY}, {tileX, tileY + N_TILE_SIZE}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
                         if (!adjacentTiles.right)
-                            DrawLineEx({tileX + N_TILE_WIDTH, tileY}, {tileX + N_TILE_WIDTH, tileY + N_TILE_HEIGHT}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
+                            DrawLineEx({tileX + N_TILE_SIZE, tileY}, {tileX + N_TILE_SIZE, tileY + N_TILE_SIZE}, TILE_WALL_OUTLINE_WIDTH, outlineColor);
                     }
                 }
             }
@@ -156,14 +156,14 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
             {
                 for (int y = startY; y < endY; y++)
                 {
-                    float tileX = x * N_TILE_WIDTH;
-                    float tileY = y * N_TILE_HEIGHT;
+                    float tileX = x * N_TILE_SIZE;
+                    float tileY = y * N_TILE_SIZE;
                     auto sTileId = GetTile(x, y);
 
                     if (sTileId == TILE_WALL)
                     {
                         Color WALL_COLOR = { 0, 255, 0, 200 };
-                        DrawRectangle(tileX, tileY, N_TILE_WIDTH, N_TILE_HEIGHT, WALL_COLOR ); // Main wall tiles
+                        DrawRectangle(tileX, tileY, N_TILE_SIZE, N_TILE_SIZE, WALL_COLOR ); // Main wall tiles
                     }
                 }
             }

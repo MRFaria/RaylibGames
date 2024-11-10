@@ -20,6 +20,7 @@ private:
     Camera2D camera;
     Player player;
 
+    void InitPlayer();
     void Init();
     void Update(float delta);
     void Draw();
