@@ -9,7 +9,7 @@
 
 class Entity {
 public:
-    Entity(std::string texturePath);  // Constructor
+    Entity(std::string texturePath, Level &level);  // Constructor
     ~Entity();  // Constructor
     void Update();
     void Draw(Camera2D &camera);
@@ -17,14 +17,15 @@ public:
     void SetScale(float _scale);
     Vector2 GetPosition();
     Circle GetCollisionObject();
-    Rectangle GetRect();
+    Rectangle GetTextureRect();
     void SetPosition(Vector2 pos);
 
 protected:
     Texture2D _texture;
+    const Level& _level;
     Circle _collisionObject;
-    float _speed = 600.0f;
-    float _stopThreshold = 10.0f;
+    float _speed = 500.0f;
+    float _stopThreshold = 30.0f;
     float _acceleration = 2000.0f;
     float _deceleration = 1500.0f;
     Vector2 _velocity = {0.0f, 0.0f};
@@ -36,6 +37,11 @@ protected:
     float _rotationSpeed = 0.0f;
 
     void VelocityMove(Vector2 direction);
+    Vector2 CheckCollisionsWithWorld();
+
+    bool _collision;
+    Vector2 _nearestPoint;
+    Vector2 _potentialPosition;
 };
 
 #endif // ENTITY_H

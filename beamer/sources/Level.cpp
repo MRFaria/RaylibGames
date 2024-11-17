@@ -40,17 +40,17 @@ void Level::Cleanup()
     UnloadShader(_shader);
 }
 
-int Level::GetWidth()
+int Level::GetWidth() const
 {
     return _width;
 }
 
-int Level::GetHeight()
+int Level::GetHeight() const 
 {
     return _height;
 }
 
-char Level::GetTile(int x, int y)
+char Level::GetTile(int x, int y) const 
 {
     if ((y >= 0 && y < _height) && (x >= 0 && x < _width))
         return _level[y * _width + x];
@@ -58,7 +58,7 @@ char Level::GetTile(int x, int y)
         return TILE_WALL;
 }
 
-char Level::GetFloodTile(int x, int y)
+char Level::GetFloodTile(int x, int y) const
 {
     if ((y >= 0 && y < _height) && (x >= 0 && x < _width))
         return _floodFill[y * _width + x];
@@ -162,7 +162,7 @@ Texture2D Level::DrawLevelToTexture(Camera2D &camera)
 
                     if (sTileId == TILE_WALL)
                     {
-                        Color WALL_COLOR = { 0, 255, 0, 200 };
+                        Color WALL_COLOR = { 0, 255, 0, 130 };
                         DrawRectangle(tileX, tileY, N_TILE_SIZE, N_TILE_SIZE, WALL_COLOR ); // Main wall tiles
                     }
                 }

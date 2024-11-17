@@ -1,7 +1,8 @@
 #include "Player.h"
 
-Player::Player() : Entity{"textures/circle.png"}
+Player::Player(Level &level) : Entity{"textures/circle.png", level}
 {
+
 
 }
 
@@ -10,7 +11,7 @@ Player::~Player()
 
 }
 
-void Player::Update(Level& level)
+void Player::Update()
 {
     // figure out keyboard mapping later.
     Vector2 direction = {0, 0}; // Initialize movement vector

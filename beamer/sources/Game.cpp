@@ -3,7 +3,7 @@
 #include <chrono>
 
 Game::Game(int screenWidth, int screenHeight, Level &level)
-    : isRunning(false), level(level)
+    : isRunning(false), level(level), player(level)
 {
     InitPlayer();
     Init();
@@ -87,7 +87,7 @@ void Game::CameraUpdate()
 }
 void Game::Update(float delta)
 {
-    player.Update(level);
+    player.Update();
     CameraUpdate();
     level.Update();
 

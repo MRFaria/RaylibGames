@@ -28,10 +28,10 @@ public:
     ~Level();
     void Cleanup();
 
-    int GetWidth();
-    int GetHeight();
-    char GetTile(int x, int y);
-    char GetFloodTile(int x, int y);
+    int GetWidth() const ;
+    int GetHeight() const ;
+    char GetTile(int x, int y) const;
+    char GetFloodTile(int x, int y) const;
     void Update();
     Texture2D DrawLevelToTexture(Camera2D &camera);
     void LoadRenderTextures();

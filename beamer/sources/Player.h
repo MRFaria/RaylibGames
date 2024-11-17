@@ -3,7 +3,8 @@
 class Player : public Entity
 {
     public:
-        Player();
+        Player(Level &level);
         ~Player();
-        void Update(Level &level);
+        void Update();
+
 };
