@@ -20,6 +20,14 @@ void Game::Run()
 {
     while (isRunning)
     {
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            entities.emplace_back(Entity{"textures/circle.png", level});
+            Entity& newEntity = entities.back(); // Reference to the newly added entity
+            newEntity.SetPosition(player.GetPosition());
+            newEntity.SetColor(WHITE);
+            newEntity.EntityNumber = entities.size(); // Assign the entity's unique number
+        }
         float deltaTime = GetFrameTime();
         Update(deltaTime);
         Draw();
@@ -34,18 +42,18 @@ void Game::InitPlayer()
         {
             if (level.GetFloodTile(x, y) == TILE_FLOOD)
             {
-                Vector2 startPos = Vector2{ (float)x*N_TILE_SIZE, (float)y*N_TILE_SIZE } + Vector2{ 10.0f, 10.0f };
+                Vector2 startPos = Vector2{(float)x * N_TILE_SIZE, (float)y * N_TILE_SIZE} + Vector2{10.0f, 10.0f};
                 player.SetPosition(startPos);
-                //player.SetPosition({0.0f, 0.0f});
-                //player.SetPosition({(float)x*N_TILE_WIDTH + player.GetRect().width*1.2F, (float)y*N_TILE_HEIGHT + player.GetRect().height*1.2F});
                 goto EndOfLoop;
             }
         }
     }
-    EndOfLoop:;
+EndOfLoop:;
 
     player.SetColor(PINK);
     player.SetScale(0.5);
+    player.EntityNumber = 0;
+   // entities.emplace_back(static_cast<Entity>(player));
 }
 
 void Game::Init()
@@ -87,10 +95,15 @@ void Game::CameraUpdate()
 }
 void Game::Update(float delta)
 {
-    player.Update();
+    player.Update(entities);
     CameraUpdate();
     level.Update();
-
+    
+    //CheckEntityCollisions();
+    for (auto &entity : entities)
+    {
+        entity.Update(entities);
+    }
     if (WindowShouldClose())
     {
         isRunning = false;
@@ -100,23 +113,43 @@ void Game::Update(float delta)
 void Game::DrawFramerate(Camera2D &camera)
 {
     BeginMode2D(camera);
-        std::string fps = "Frame rate is " + std::to_string(GetFPS()) + "\n";
-        Vector2 fpsPlacement = {50.0f, 50.0f};
-        DrawText(fps.c_str(), GetScreenToWorld2D(fpsPlacement, camera).x, GetScreenToWorld2D(fpsPlacement, camera).y, 20, WHITE);
+    std::string fps = "Frame rate is " + std::to_string(GetFPS()) + "\n";
+    Vector2 fpsPlacement = {50.0f, 50.0f};
+    DrawText(fps.c_str(), GetScreenToWorld2D(fpsPlacement, camera).x, GetScreenToWorld2D(fpsPlacement, camera).y, 20, WHITE);
     EndMode2D();
 }
 
 void Game::Draw()
 {
-
-
-
-
     BeginDrawing();
-        ClearBackground(BLACK);
-        Texture2D levelTexture = level.DrawLevelToTexture(camera);
-        DrawTextureRec(levelTexture, {0.0F, 0.0F, (float)levelTexture.width, -(float)levelTexture.height},{0.0F, 0.0F}, WHITE);
-        player.Draw(camera);
-        DrawFramerate(camera);
+    ClearBackground(BLACK);
+    Texture2D levelTexture = level.DrawLevelToTexture(camera);
+    DrawTextureRec(levelTexture, {0.0F, 0.0F, (float)levelTexture.width, -(float)levelTexture.height}, {0.0F, 0.0F}, WHITE);
+    player.Draw(camera);
+    for (auto &entity : entities)
+    {
+        entity.Draw(camera);
+    }
+    DrawFramerate(camera);
     EndDrawing();
 }
+
+// todo make entity manager
+//void Game::CheckEntityCollisions()
+//{
+ //   for (int a = 0; a < entities.size(); a++)
+  //  {
+//        for (int b = 0; b < entities.size(); b++)
+//        {
+//            if (a == b)
+//            {
+//               //skip
+//            }
+//            // check if the distance between the centers is larger than the combined radius.
+//            else if (Vector2Distance(entities[a].GetPosition(), entities[b].GetPosition()) <= entities[a].GetCollisionObject().radius + entities[b].GetCollisionObject().radius)
+///            {
+//                printf("collision\n");
+//            }
+//        }
+//    }/
+//}

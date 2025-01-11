@@ -19,6 +19,7 @@ private:
     Level level;
     Camera2D camera;
     Player player;
+    std::vector<Entity> entities;
 
     void InitPlayer();
     void Init();

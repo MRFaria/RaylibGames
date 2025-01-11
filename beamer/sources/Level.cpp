@@ -58,6 +58,8 @@ char Level::GetTile(int x, int y) const
         return TILE_WALL;
 }
 
+
+
 char Level::GetFloodTile(int x, int y) const
 {
     if ((y >= 0 && y < _height) && (x >= 0 && x < _width))

@@ -1,10 +1,36 @@
 #include "Entity.h"
 #include "math.h"
 
+// THIS CLASS needs to be optimised, as spawning a lot of them slows down the game. 
+// is it the collision?
 Entity::Entity(std::string texturePath, Level &level) : _level(level)
 {
     std::string path = std::string(ASSETS_PATH) + texturePath;
     _texture = LoadTexture(path.c_str());
+    EntityNumber = -1;
+}
+
+Entity::Entity(Entity&& other) noexcept 
+    : _texture(other._texture), // Move the texture
+      _level(other._level),     // Reference remains valid
+      _position(other._position),
+      _velocity(other._velocity),
+      _rotation(other._rotation),
+      _rotationSpeed(other._rotationSpeed),
+      _scale(other._scale),
+      _color(other._color),
+      _acceleration(other._acceleration),
+      _deceleration(other._deceleration),
+      _speed(other._speed),
+      _stopThreshold(other._stopThreshold),
+      _collision(other._collision),
+      _nearestPoint(other._nearestPoint),
+      _origin(other._origin),
+      EntityNumber(other.EntityNumber)
+
+{
+    // Leave the source object in a valid state
+    other._texture = { 0 }; // Reset texture to an empty state
 }
 
 Entity::~Entity()
@@ -12,7 +38,7 @@ Entity::~Entity()
     UnloadTexture(_texture);
 }
 
-void Entity::Update()
+void Entity::Update(std::vector<Entity> &entities)
 {
 
     _rotation = _rotation + _rotationSpeed * GetFrameTime();
@@ -20,6 +46,8 @@ void Entity::Update()
     {
         _rotation = _rotation - 360.0f;
     }
+
+    VelocityMove(Vector2{0.0, 0.0}, entities);
 }
 
 void Entity::SetColor(Color color)
@@ -42,7 +70,7 @@ void Entity::Draw(Camera2D &camera)
     DrawTexturePro(_texture, source, target, _origin, _rotation, _color);
     if (_collision)
     {
-        DrawCircleLines(static_cast<int>(_position.x), static_cast<int>(_position.y), GetCollisionObject().radius + 2, RED);        //DrawCircleV(GetCollisionObject().point, GetCollisionObject().radius, RED);
+        DrawCircle(static_cast<int>(_position.x), static_cast<int>(_position.y), GetCollisionObject().radius, {230,31,35,100});        //DrawCircleV(GetCollisionObject().point, GetCollisionObject().radius, RED);
     }
     EndMode2D();
 }
@@ -67,7 +95,7 @@ void Entity::SetPosition(Vector2 pos)
     _position = pos;
 }
 
-void Entity::VelocityMove(Vector2 direction)
+void Entity::VelocityMove(Vector2 direction, std::vector<Entity> &otherEntities)
 {
 
     Vector2 dv = Vector2Normalize(direction) * _acceleration * GetFrameTime();
@@ -118,13 +146,14 @@ void Entity::VelocityMove(Vector2 direction)
             _velocity.x = 0;
     }
 
+    _position = CheckCollisionsWithEntities(otherEntities);
     _position = CheckCollisionsWithWorld();
 }
 
 
 Vector2 Entity::CheckCollisionsWithWorld()
 {
-        _collision = false; // Reset collision flag at the start of the frame
+    _collision = false; // Reset collision flag at the start of the frame
     // Update potential new position
     Vector2 potentialPosition = _position + _velocity * GetFrameTime();
 
@@ -171,7 +200,6 @@ Vector2 Entity::CheckCollisionsWithWorld()
                     // No collision, but do not reset for all iterations
                     if (!_collision)
                     {
-                        _collision = false;
                         _nearestPoint = _position; // Reset only if no collision detected anywhere
                     }
                 }
@@ -181,3 +209,52 @@ Vector2 Entity::CheckCollisionsWithWorld()
 
     return potentialPosition;
 }
+
+Vector2 Entity::CheckCollisionsWithEntities(std::vector<Entity> &otherEntities)
+{
+    Vector2 newPosition = _position + _velocity * GetFrameTime();
+    Vector2 adjustedVelocity = _velocity; // Start with the original velocity
+
+    for (int iEntity = 0; iEntity < otherEntities.size(); iEntity++)
+    {
+        printf("Entity number %d, other entity number %d\n", EntityNumber, otherEntities[iEntity].EntityNumber);
+        if (EntityNumber == otherEntities[iEntity].EntityNumber)
+        {
+            continue; // Skip self
+        }
+
+        // Calculate distance between entities
+        float distance = Vector2Distance(GetPosition(), otherEntities[iEntity].GetPosition());
+        float combinedRadius = GetCollisionObject().radius + otherEntities[iEntity].GetCollisionObject().radius;
+        
+        // Check for collision
+        if (distance <= combinedRadius)
+        {
+            printf("collision\n");
+            // Calculate overlap
+            float overlap = combinedRadius - distance;
+
+            // Collision normal (direction from the other entity to this entity)
+            Vector2 collisionNormal = Vector2Normalize(GetPosition() - otherEntities[iEntity].GetPosition());
+
+            // Resolve overlap by pushing the player outward along the collision normal
+            newPosition += collisionNormal * overlap/2;
+
+            // Adjust velocity to slide along the collision surface
+            // Project the velocity onto the tangent of the collision
+            Vector2 collisionTangent = { -collisionNormal.y, collisionNormal.x }; // Tangent is perpendicular to the normal
+
+            // Update adjusted velocity based on the tangent of the current collision
+            adjustedVelocity = collisionTangent * Vector2DotProduct(adjustedVelocity, collisionTangent);
+
+            // OPTIONAL: Add slight damping to prevent "jittering" near the edge
+            adjustedVelocity *= 0.95f;
+        }
+    }
+
+    // Update the position and velocity after processing all collisions
+    _velocity = adjustedVelocity; // Slide along the collision surface
+    return newPosition;
+}
+
+

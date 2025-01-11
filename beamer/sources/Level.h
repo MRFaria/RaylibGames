@@ -31,6 +31,7 @@ public:
     int GetWidth() const ;
     int GetHeight() const ;
     char GetTile(int x, int y) const;
+    std::vector<int> GetEntitiesInTile(int x, int y) const;
     char GetFloodTile(int x, int y) const;
     void Update();
     Texture2D DrawLevelToTexture(Camera2D &camera);
@@ -60,6 +61,9 @@ private:
     std::vector<char> _level;
     std::vector<char> _floodFill;
     Shader _shader;
+
+    //store the entities 
+    std::vector<std::vector<int>> _entities;
 };
 
 #endif
